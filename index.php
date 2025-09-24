@@ -5,6 +5,7 @@ require_once 'includes/auth.php';
 require_once 'includes/router.php';
 require_once 'controllers/WebController.php';
 
+// Session configuration is already handled in config.php
 // Start session
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
@@ -24,6 +25,51 @@ $webController = new WebController($database, $auth);
 // Get the request method and URI with fallbacks for CLI mode
 $method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
 $uri = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH);
+
+// Handle static assets first
+if (preg_match('/\.(css|js|png|jpg|jpeg|gif|ico|svg)$/', $uri)) {
+    $filePath = '.' . $uri;
+    if (file_exists($filePath)) {
+        // Get the file extension
+        $extension = strtolower(pathinfo($filePath, PATHINFO_EXTENSION));
+        
+        // Set appropriate content type
+        switch ($extension) {
+            case 'css':
+                header('Content-Type: text/css');
+                break;
+            case 'js':
+                header('Content-Type: application/javascript');
+                break;
+            case 'png':
+                header('Content-Type: image/png');
+                break;
+            case 'jpg':
+            case 'jpeg':
+                header('Content-Type: image/jpeg');
+                break;
+            case 'gif':
+                header('Content-Type: image/gif');
+                break;
+            case 'ico':
+                header('Content-Type: image/x-icon');
+                break;
+            case 'svg':
+                header('Content-Type: image/svg+xml');
+                break;
+        }
+        
+        // Send cache headers for better performance
+        header('Cache-Control: public, max-age=31536000');
+        header('Expires: ' . gmdate('D, d M Y H:i:s', time() + 31536000) . ' GMT');
+        
+        readfile($filePath);
+        exit;
+    } else {
+        http_response_code(404);
+        exit('File not found');
+    }
+}
 
 // Remove base path if running in subdirectory
 $basePath = '/';
@@ -127,6 +173,12 @@ try {
                     $webController->showSalesForm($matches[1]);
                 } else {
                     $webController->handleSalesForm($matches[1]);
+                }
+            } elseif (preg_match('#^stores/edit/(.+)$#', $uri, $matches)) {
+                if ($method === 'GET') {
+                    $webController->showStoresForm($matches[1]);
+                } else {
+                    $webController->handleStoresForm($matches[1]);
                 }
             } elseif (preg_match('#^settings/(.+)$#', $uri, $matches)) {
                 if ($method === 'POST') {

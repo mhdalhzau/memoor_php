@@ -118,17 +118,11 @@ class Auth {
     }
     
     private function loadUserFromSession() {
-        if (isset($_SESSION['user_id'])) {
-            $stmt = $this->db->prepare("SELECT * FROM users WHERE id = ?");
-            $stmt->execute([$_SESSION['user_id']]);
-            $user = $stmt->fetch();
-            
-            if ($user) {
-                $this->current_user = $user;
-            } else {
-                // Invalid session, clear it
-                session_destroy();
-            }
+        if (isset($_SESSION['user']) && $_SESSION['authenticated']) {
+            $this->current_user = $_SESSION['user'];
+        } else {
+            // Invalid session, clear it
+            session_destroy();
         }
     }
     

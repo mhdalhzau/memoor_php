@@ -29,7 +29,9 @@ if (DEBUG_MODE) {
     ini_set('display_errors', 0);
 }
 
-// Session configuration
-ini_set('session.gc_maxlifetime', SESSION_LIFETIME);
-session_set_cookie_params(SESSION_LIFETIME);
+// Session configuration (must be set before session_start())
+if (session_status() === PHP_SESSION_NONE) {
+    ini_set('session.gc_maxlifetime', SESSION_LIFETIME);
+    session_set_cookie_params(SESSION_LIFETIME);
+}
 ?>

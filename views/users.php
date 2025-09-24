@@ -1,79 +1,163 @@
 <?php
-$title = 'Karyawan - SPBU Management System';
+$title = 'Users Management';
 $currentPage = 'users';
 ob_start();
 ?>
 
-<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
-    <h2>Data Karyawan</h2>
-    <?php if ($_SESSION['user']['role'] === 'administrasi'): ?>
-        <a href="/users/new" class="btn">Tambah Karyawan Baru</a>
-    <?php endif; ?>
+<!-- Filter Card -->
+<div class="card mb-4">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <div>
+            <i data-feather="users" class="me-1"></i>
+            Filter Data Karyawan
+        </div>
+        <?php if ($_SESSION['user']['role'] === 'administrasi'): ?>
+            <a href="/users/new" class="btn btn-primary btn-sm">
+                <i data-feather="user-plus" class="me-1"></i>
+                Tambah Karyawan Baru
+            </a>
+        <?php endif; ?>
+    </div>
+    <div class="card-body">
+        <form method="GET" class="row g-3">
+            <div class="col-md-4">
+                <label class="small mb-1" for="role">Role</label>
+                <select class="form-select" id="role" name="role">
+                    <option value="">Semua Role</option>
+                    <option value="staff" <?= ($_GET['role'] ?? '') === 'staff' ? 'selected' : '' ?>>Staff</option>
+                    <option value="manager" <?= ($_GET['role'] ?? '') === 'manager' ? 'selected' : '' ?>>Manager</option>
+                    <option value="administrasi" <?= ($_GET['role'] ?? '') === 'administrasi' ? 'selected' : '' ?>>Administrasi</option>
+                </select>
+            </div>
+            
+            <div class="col-md-4 d-flex align-items-end">
+                <button class="btn btn-outline-primary" type="submit">
+                    <i data-feather="search" class="me-1"></i>
+                    Filter
+                </button>
+            </div>
+        </form>
+    </div>
 </div>
 
+<!-- Data Card -->
 <div class="card">
-    <form method="GET" style="display: flex; gap: 1rem; margin-bottom: 1rem; align-items: end;">
-        <div class="form-group" style="margin-bottom: 0;">
-            <label for="role">Role:</label>
-            <select id="role" name="role">
-                <option value="">Semua Role</option>
-                <option value="staff" <?= ($_GET['role'] ?? '') === 'staff' ? 'selected' : '' ?>>Staff</option>
-                <option value="manager" <?= ($_GET['role'] ?? '') === 'manager' ? 'selected' : '' ?>>Manager</option>
-                <option value="administrasi" <?= ($_GET['role'] ?? '') === 'administrasi' ? 'selected' : '' ?>>Administrasi</option>
-            </select>
-        </div>
-        
-        <button type="submit" class="btn">Filter</button>
-    </form>
-    
-    <?php if (empty($users_list)): ?>
-        <p style="text-align: center; color: #666; padding: 2rem;">
-            Tidak ada data karyawan.
-        </p>
-    <?php else: ?>
-        <table class="table">
-            <thead>
-                <tr>
-                    <th>Nama</th>
-                    <th>Email</th>
-                    <th>Role</th>
-                    <th>Telepon</th>
-                    <th>Gaji</th>
-                    <th>Toko Assigned</th>
-                    <?php if ($_SESSION['user']['role'] === 'administrasi'): ?>
-                        <th>Aksi</th>
-                    <?php endif; ?>
-                </tr>
-            </thead>
-            <tbody>
-                <?php foreach ($users_list as $user): ?>
-                    <tr>
-                        <td><?= htmlspecialchars($user['name']) ?></td>
-                        <td><?= htmlspecialchars($user['email']) ?></td>
-                        <td>
-                            <span style="padding: 0.25rem 0.5rem; border-radius: 3px; font-size: 0.8rem; background: 
-                                <?= $user['role'] === 'manager' ? '#667eea' : ($user['role'] === 'administrasi' ? '#f39c12' : '#95a5a6') ?>; 
-                                color: white;">
-                                <?= ucfirst($user['role']) ?>
-                            </span>
-                        </td>
-                        <td><?= $user['phone'] ?: '-' ?></td>
-                        <td><?= $user['salary'] ? 'Rp ' . number_format($user['salary'], 0, ',', '.') : '-' ?></td>
-                        <td><?= $user['stores'] ?? '-' ?></td>
-                        <?php if ($_SESSION['user']['role'] === 'administrasi'): ?>
-                            <td>
-                                <a href="/users/edit/<?= $user['id'] ?>" class="btn" style="padding: 0.25rem 0.5rem; font-size: 0.8rem;">Edit</a>
-                                <?php if ($user['id'] !== $_SESSION['user']['id']): ?>
-                                    <a href="/users/delete/<?= $user['id'] ?>" class="btn btn-danger" style="padding: 0.25rem 0.5rem; font-size: 0.8rem;" onclick="return confirm('Yakin hapus karyawan ini?')">Hapus</a>
+    <div class="card-header">
+        <i data-feather="users" class="me-1"></i>
+        Data Karyawan
+    </div>
+    <div class="card-body">
+        <?php if (empty($users_list)): ?>
+            <div class="text-center py-4">
+                <div class="text-muted">
+                    <i data-feather="user-x" class="feather-xl mb-2"></i>
+                    <p class="mt-3">Tidak ada data karyawan.</p>
+                </div>
+            </div>
+        <?php else: ?>
+            <div class="table-responsive">
+                <table class="table table-striped" id="datatablesSimple">
+                    <thead>
+                        <tr>
+                            <th>Karyawan</th>
+                            <th>Email</th>
+                            <th>Role</th>
+                            <th>Kontak</th>
+                            <th>Gaji</th>
+                            <th>Toko Assigned</th>
+                            <?php if ($_SESSION['user']['role'] === 'administrasi'): ?>
+                                <th>Aksi</th>
+                            <?php endif; ?>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php foreach ($users_list as $user): ?>
+                            <tr>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <div class="avatar avatar-sm me-2">
+                                            <img class="avatar-img img-fluid" src="https://ui-avatars.com/api/?name=<?= urlencode($user['name']) ?>&background=random" />
+                                        </div>
+                                        <div class="fw-500"><?= htmlspecialchars($user['name']) ?></div>
+                                    </div>
+                                </td>
+                                <td><?= htmlspecialchars($user['email']) ?></td>
+                                <td>
+                                    <?php
+                                    $badgeClass = 'primary';
+                                    if ($user['role'] === 'manager') $badgeClass = 'primary';
+                                    elseif ($user['role'] === 'administrasi') $badgeClass = 'warning';
+                                    else $badgeClass = 'secondary';
+                                    ?>
+                                    <div class="badge bg-<?= $badgeClass ?>-soft text-<?= $badgeClass ?>">
+                                        <?= ucfirst($user['role']) ?>
+                                    </div>
+                                </td>
+                                <td>
+                                    <?php if ($user['phone']): ?>
+                                        <div class="small">
+                                            <i data-feather="phone" class="feather-xs me-1"></i>
+                                            <?= htmlspecialchars($user['phone']) ?>
+                                        </div>
+                                    <?php else: ?>
+                                        <span class="text-muted">-</span>
+                                    <?php endif; ?>
+                                </td>
+                                <td>
+                                    <?php if ($user['salary']): ?>
+                                        <div class="fw-bold text-success">
+                                            Rp <?= number_format($user['salary'], 0, ',', '.') ?>
+                                        </div>
+                                    <?php else: ?>
+                                        <span class="text-muted">-</span>
+                                    <?php endif; ?>
+                                </td>
+                                <td>
+                                    <?php if ($user['stores']): ?>
+                                        <div class="badge bg-info-soft text-info">
+                                            <?= htmlspecialchars($user['stores']) ?>
+                                        </div>
+                                    <?php else: ?>
+                                        <span class="text-muted">-</span>
+                                    <?php endif; ?>
+                                </td>
+                                <?php if ($_SESSION['user']['role'] === 'administrasi'): ?>
+                                    <td>
+                                        <div class="dropdown">
+                                            <button class="btn btn-datatable btn-icon btn-transparent-dark" data-bs-toggle="dropdown">
+                                                <i data-feather="more-vertical"></i>
+                                            </button>
+                                            <div class="dropdown-menu">
+                                                <a class="dropdown-item" href="/users/edit/<?= $user['id'] ?>">
+                                                    <div class="dropdown-item-icon">
+                                                        <i data-feather="edit-3"></i>
+                                                    </div>
+                                                    Edit
+                                                </a>
+                                                <?php if ($user['id'] !== $_SESSION['user']['id']): ?>
+                                                    <a class="dropdown-item text-danger" href="/users/delete/<?= $user['id'] ?>" onclick="return confirm('Yakin hapus karyawan ini?')">
+                                                        <div class="dropdown-item-icon">
+                                                            <i data-feather="trash-2"></i>
+                                                        </div>
+                                                        Hapus
+                                                    </a>
+                                                <?php endif; ?>
+                                            </div>
+                                        </div>
+                                    </td>
                                 <?php endif; ?>
-                            </td>
-                        <?php endif; ?>
-                    </tr>
-                <?php endforeach; ?>
-            </tbody>
-        </table>
-    <?php endif; ?>
+                            </tr>
+                        <?php endforeach; ?>
+                    </tbody>
+                </table>
+            </div>
+        <?php endif; ?>
+    </div>
 </div>
+
+<!-- Add DataTables JavaScript -->
+<script src="https://cdn.jsdelivr.net/npm/simple-datatables@7.1.2/dist/umd/simple-datatables.min.js" crossorigin="anonymous"></script>
+<script src="/assets/js/datatables-simple.js"></script>
 
 <?php
 $content = ob_get_clean();

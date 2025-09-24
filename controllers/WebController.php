@@ -144,6 +144,11 @@ class WebController {
     }
     
     private function requireAuth() {
+        // Check if user is logged in via session (demo mode for now)
+        if (isset($_SESSION['user']) && isset($_SESSION['authenticated'])) {
+            return; // User is authenticated
+        }
+        
         // Skip auth check if database not connected (demo mode)
         if (!$this->db || !$this->db->isConnected()) {
             $_SESSION['user'] = [
@@ -332,6 +337,72 @@ class WebController {
         $stores_list = $this->getStores();
         
         include 'views/stores.php';
+    }
+    
+    public function showStoresForm($storeId = null) {
+        $this->requireAuth();
+        
+        $editing = !empty($storeId);
+        $store = [];
+        
+        if ($editing) {
+            // Get store data by ID - for demo, return mock data
+            $allStores = $this->getStores();
+            $store = array_filter($allStores, function($s) use ($storeId) {
+                return $s['id'] == $storeId;
+            });
+            $store = !empty($store) ? array_values($store)[0] : [];
+            
+            if (!$store) {
+                $_SESSION['error'] = 'Data toko tidak ditemukan';
+                header('Location: /stores');
+                exit();
+            }
+        }
+        
+        include 'views/stores_form.php';
+    }
+    
+    public function handleStoresForm($storeId = null) {
+        $this->requireAuth();
+        
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            header('Location: /stores');
+            exit();
+        }
+        
+        $editing = !empty($storeId);
+        
+        // Validate input data
+        $data = [
+            'name' => $_POST['name'] ?? '',
+            'address' => $_POST['address'] ?? '',
+            'phone' => $_POST['phone'] ?? '',
+            'manager' => $_POST['manager'] ?? '',
+            'description' => $_POST['description'] ?? '',
+            'status' => $_POST['status'] ?? 'active'
+        ];
+        
+        if (empty($data['name'])) {
+            $_SESSION['error'] = 'Nama toko harus diisi';
+            header('Location: ' . ($editing ? '/stores/edit/' . $storeId : '/stores/new'));
+            exit();
+        }
+        
+        try {
+            if ($editing) {
+                $_SESSION['success'] = 'Data toko berhasil diupdate';
+            } else {
+                $_SESSION['success'] = 'Toko baru berhasil ditambahkan';
+            }
+            
+            header('Location: /stores');
+            
+        } catch (Exception $e) {
+            $_SESSION['error'] = 'Error: ' . $e->getMessage();
+            header('Location: ' . ($editing ? '/stores/edit/' . $storeId : '/stores/new'));
+        }
+        exit();
     }
     
     public function showPayroll() {
