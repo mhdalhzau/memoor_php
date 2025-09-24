@@ -19,7 +19,7 @@ $auth = new Auth($db);
 
 // Initialize controllers
 $router = new Router($db, $auth);
-$webController = new WebController($db, $auth);
+$webController = new WebController($database, $auth);
 
 // Get the request method and URI with fallbacks for CLI mode
 $method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
