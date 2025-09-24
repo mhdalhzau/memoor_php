@@ -1,119 +1,210 @@
 <?php
-$title = 'Kas - SPBU Management System';
+$title = 'Cashflow Management';
 $currentPage = 'cashflow';
 ob_start();
 ?>
 
-<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
-    <h2>Data Arus Kas</h2>
-    <?php if ($_SESSION['user']['role'] !== 'staff'): ?>
-        <a href="/cashflow/new" class="btn">Tambah Transaksi</a>
-    <?php endif; ?>
+<!-- Filter Card -->
+<div class="card mb-4">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <div>
+            <i data-feather="trending-up" class="me-1"></i>
+            Filter Arus Kas
+        </div>
+        <?php if ($_SESSION['user']['role'] !== 'staff'): ?>
+            <a href="/cashflow/new" class="btn btn-primary btn-sm">
+                <i data-feather="plus" class="me-1"></i>
+                Tambah Transaksi
+            </a>
+        <?php endif; ?>
+    </div>
+    <div class="card-body">
+        <form method="GET" class="row g-3">
+            <div class="col-md-2">
+                <label class="small mb-1" for="type">Tipe</label>
+                <select class="form-select" id="type" name="type">
+                    <option value="">Semua Tipe</option>
+                    <option value="income" <?= ($_GET['type'] ?? '') === 'income' ? 'selected' : '' ?>>Pemasukan</option>
+                    <option value="expense" <?= ($_GET['type'] ?? '') === 'expense' ? 'selected' : '' ?>>Pengeluaran</option>
+                </select>
+            </div>
+            
+            <div class="col-md-3">
+                <label class="small mb-1" for="category">Kategori</label>
+                <select class="form-select" id="category" name="category">
+                    <option value="">Semua Kategori</option>
+                    <option value="operational" <?= ($_GET['category'] ?? '') === 'operational' ? 'selected' : '' ?>>Operasional</option>
+                    <option value="sales" <?= ($_GET['category'] ?? '') === 'sales' ? 'selected' : '' ?>>Penjualan</option>
+                    <option value="maintenance" <?= ($_GET['category'] ?? '') === 'maintenance' ? 'selected' : '' ?>>Maintenance</option>
+                    <option value="inventory" <?= ($_GET['category'] ?? '') === 'inventory' ? 'selected' : '' ?>>Inventory</option>
+                </select>
+            </div>
+            
+            <?php if ($_SESSION['user']['role'] !== 'staff'): ?>
+            <div class="col-md-3">
+                <label class="small mb-1" for="store_id">Toko</label>
+                <select class="form-select" id="store_id" name="store_id">
+                    <option value="">Semua Toko</option>
+                    <?php foreach ($stores as $store): ?>
+                        <option value="<?= $store['id'] ?>" <?= ($_GET['store_id'] ?? '') == $store['id'] ? 'selected' : '' ?>>
+                            <?= htmlspecialchars($store['name']) ?>
+                        </option>
+                    <?php endforeach; ?>
+                </select>
+            </div>
+            <?php endif; ?>
+            
+            <div class="col-md-4 d-flex align-items-end">
+                <button class="btn btn-outline-primary" type="submit">
+                    <i data-feather="search" class="me-1"></i>
+                    Filter
+                </button>
+            </div>
+        </form>
+    </div>
 </div>
 
-<div class="card">
-    <form method="GET" style="display: flex; gap: 1rem; margin-bottom: 1rem; align-items: end;">
-        <div class="form-group" style="margin-bottom: 0;">
-            <label for="type">Tipe:</label>
-            <select id="type" name="type">
-                <option value="">Semua Tipe</option>
-                <option value="income" <?= ($_GET['type'] ?? '') === 'income' ? 'selected' : '' ?>>Pemasukan</option>
-                <option value="expense" <?= ($_GET['type'] ?? '') === 'expense' ? 'selected' : '' ?>>Pengeluaran</option>
-            </select>
-        </div>
-        
-        <div class="form-group" style="margin-bottom: 0;">
-            <label for="category">Kategori:</label>
-            <select id="category" name="category">
-                <option value="">Semua Kategori</option>
-                <option value="operational" <?= ($_GET['category'] ?? '') === 'operational' ? 'selected' : '' ?>>Operasional</option>
-                <option value="sales" <?= ($_GET['category'] ?? '') === 'sales' ? 'selected' : '' ?>>Penjualan</option>
-                <option value="maintenance" <?= ($_GET['category'] ?? '') === 'maintenance' ? 'selected' : '' ?>>Maintenance</option>
-                <option value="inventory" <?= ($_GET['category'] ?? '') === 'inventory' ? 'selected' : '' ?>>Inventory</option>
-            </select>
-        </div>
-        
-        <?php if ($_SESSION['user']['role'] !== 'staff'): ?>
-        <div class="form-group" style="margin-bottom: 0;">
-            <label for="store_id">Toko:</label>
-            <select id="store_id" name="store_id">
-                <option value="">Semua Toko</option>
-                <?php foreach ($stores as $store): ?>
-                    <option value="<?= $store['id'] ?>" <?= ($_GET['store_id'] ?? '') == $store['id'] ? 'selected' : '' ?>>
-                        <?= htmlspecialchars($store['name']) ?>
-                    </option>
-                <?php endforeach; ?>
-            </select>
-        </div>
-        <?php endif; ?>
-        
-        <button type="submit" class="btn">Filter</button>
-    </form>
-    
-    <!-- Summary Cards -->
-    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 2rem;">
-        <div style="background: #d4edda; padding: 1rem; border-radius: 8px; text-align: center;">
-            <h3 style="color: #155724; margin: 0;">Rp <?= number_format($summary['total_income'] ?? 0, 0, ',', '.') ?></h3>
-            <p style="color: #155724; margin: 0.5rem 0 0;">Total Pemasukan</p>
-        </div>
-        <div style="background: #f8d7da; padding: 1rem; border-radius: 8px; text-align: center;">
-            <h3 style="color: #721c24; margin: 0;">Rp <?= number_format($summary['total_expense'] ?? 0, 0, ',', '.') ?></h3>
-            <p style="color: #721c24; margin: 0.5rem 0 0;">Total Pengeluaran</p>
-        </div>
-        <div style="background: #cce5ff; padding: 1rem; border-radius: 8px; text-align: center;">
-            <h3 style="color: #004085; margin: 0;">Rp <?= number_format(($summary['total_income'] ?? 0) - ($summary['total_expense'] ?? 0), 0, ',', '.') ?></h3>
-            <p style="color: #004085; margin: 0.5rem 0 0;">Saldo Bersih</p>
+<!-- Summary Cards -->
+<div class="row mb-4">
+    <div class="col-xl-4 mb-4">
+        <div class="card border-left-success h-100">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="flex-grow-1">
+                        <div class="small fw-bold text-success mb-1">Total Pemasukan</div>
+                        <div class="h5">Rp <?= number_format($summary['total_income'] ?? 0, 0, ',', '.') ?></div>
+                    </div>
+                    <div class="flex-shrink-0"><i data-feather="trending-up" class="text-success"></i></div>
+                </div>
+            </div>
         </div>
     </div>
-    
-    <?php if (empty($cashflow_list)): ?>
-        <p style="text-align: center; color: #666; padding: 2rem;">
-            Tidak ada data transaksi kas.
-        </p>
-    <?php else: ?>
-        <table class="table">
-            <thead>
-                <tr>
-                    <th>Tanggal</th>
-                    <th>Toko</th>
-                    <th>Kategori</th>
-                    <th>Tipe</th>
-                    <th>Jumlah</th>
-                    <th>Keterangan</th>
-                    <?php if ($_SESSION['user']['role'] !== 'staff'): ?>
-                        <th>Aksi</th>
-                    <?php endif; ?>
-                </tr>
-            </thead>
-            <tbody>
-                <?php foreach ($cashflow_list as $cashflow): ?>
-                    <tr>
-                        <td><?= date('d/m/Y', strtotime($cashflow['created_at'] ?? 'today')) ?></td>
-                        <td><?= htmlspecialchars($cashflow['store_name']) ?></td>
-                        <td><?= ucfirst($cashflow['category']) ?></td>
-                        <td>
-                            <span style="padding: 0.25rem 0.5rem; border-radius: 3px; font-size: 0.8rem; background: 
-                                <?= $cashflow['type'] === 'income' ? '#27ae60' : '#e74c3c' ?>; 
-                                color: white;">
-                                <?= $cashflow['type'] === 'income' ? 'Pemasukan' : 'Pengeluaran' ?>
-                            </span>
-                        </td>
-                        <td style="color: <?= $cashflow['type'] === 'income' ? '#27ae60' : '#e74c3c' ?>; font-weight: bold;">
-                            <?= $cashflow['type'] === 'income' ? '+' : '-' ?>Rp <?= number_format($cashflow['amount'], 0, ',', '.') ?>
-                        </td>
-                        <td><?= htmlspecialchars($cashflow['description'] ?? '-') ?></td>
-                        <?php if ($_SESSION['user']['role'] !== 'staff'): ?>
-                            <td>
-                                <a href="/cashflow/edit/<?= $cashflow['id'] ?>" class="btn" style="padding: 0.25rem 0.5rem; font-size: 0.8rem;">Edit</a>
-                                <a href="/cashflow/delete/<?= $cashflow['id'] ?>" class="btn btn-danger" style="padding: 0.25rem 0.5rem; font-size: 0.8rem;" onclick="return confirm('Yakin hapus transaksi ini?')">Hapus</a>
-                            </td>
-                        <?php endif; ?>
-                    </tr>
-                <?php endforeach; ?>
-            </tbody>
-        </table>
-    <?php endif; ?>
+    <div class="col-xl-4 mb-4">
+        <div class="card border-left-danger h-100">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="flex-grow-1">
+                        <div class="small fw-bold text-danger mb-1">Total Pengeluaran</div>
+                        <div class="h5">Rp <?= number_format($summary['total_expense'] ?? 0, 0, ',', '.') ?></div>
+                    </div>
+                    <div class="flex-shrink-0"><i data-feather="trending-down" class="text-danger"></i></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-4 mb-4">
+        <div class="card border-left-primary h-100">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="flex-grow-1">
+                        <div class="small fw-bold text-primary mb-1">Saldo Bersih</div>
+                        <div class="h5">Rp <?= number_format(($summary['total_income'] ?? 0) - ($summary['total_expense'] ?? 0), 0, ',', '.') ?></div>
+                    </div>
+                    <div class="flex-shrink-0"><i data-feather="dollar-sign" class="text-primary"></i></div>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
+
+<!-- Data Card -->
+<div class="card">
+    <div class="card-header">
+        <i data-feather="activity" class="me-1"></i>
+        Data Arus Kas
+    </div>
+    <div class="card-body">
+        <?php if (empty($cashflow_list)): ?>
+            <div class="text-center py-4">
+                <div class="text-muted">
+                    <i data-feather="dollar-sign" class="feather-xl mb-2"></i>
+                    <p class="mt-3">Tidak ada data transaksi kas.</p>
+                </div>
+            </div>
+        <?php else: ?>
+            <div class="table-responsive">
+                <table class="table table-striped" id="datatablesSimple">
+                    <thead>
+                        <tr>
+                            <th>Tanggal</th>
+                            <th>Toko</th>
+                            <th>Kategori</th>
+                            <th>Tipe</th>
+                            <th>Jumlah</th>
+                            <th>Keterangan</th>
+                            <?php if ($_SESSION['user']['role'] !== 'staff'): ?>
+                                <th>Aksi</th>
+                            <?php endif; ?>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php foreach ($cashflow_list as $cashflow): ?>
+                            <tr>
+                                <td><?= date('d/m/Y', strtotime($cashflow['created_at'] ?? 'today')) ?></td>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <div class="avatar avatar-sm me-2">
+                                            <div class="avatar-img rounded-circle bg-primary-soft text-primary d-flex align-items-center justify-content-center">
+                                                <i data-feather="home"></i>
+                                            </div>
+                                        </div>
+                                        <?= htmlspecialchars($cashflow['store_name']) ?>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="badge bg-info-soft text-info">
+                                        <?= ucfirst($cashflow['category']) ?>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="badge bg-<?= $cashflow['type'] === 'income' ? 'success' : 'danger' ?>-soft text-<?= $cashflow['type'] === 'income' ? 'success' : 'danger' ?>">
+                                        <i data-feather="<?= $cashflow['type'] === 'income' ? 'arrow-up' : 'arrow-down' ?>" class="feather-xs me-1"></i>
+                                        <?= $cashflow['type'] === 'income' ? 'Pemasukan' : 'Pengeluaran' ?>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="fw-bold text-<?= $cashflow['type'] === 'income' ? 'success' : 'danger' ?>">
+                                        <?= $cashflow['type'] === 'income' ? '+' : '-' ?>Rp <?= number_format($cashflow['amount'], 0, ',', '.') ?>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="small"><?= htmlspecialchars($cashflow['description'] ?? '-') ?></div>
+                                </td>
+                                <?php if ($_SESSION['user']['role'] !== 'staff'): ?>
+                                    <td>
+                                        <div class="dropdown">
+                                            <button class="btn btn-datatable btn-icon btn-transparent-dark" data-bs-toggle="dropdown">
+                                                <i data-feather="more-vertical"></i>
+                                            </button>
+                                            <div class="dropdown-menu">
+                                                <a class="dropdown-item" href="/cashflow/edit/<?= $cashflow['id'] ?>">
+                                                    <div class="dropdown-item-icon">
+                                                        <i data-feather="edit-3"></i>
+                                                    </div>
+                                                    Edit
+                                                </a>
+                                                <a class="dropdown-item text-danger" href="/cashflow/delete/<?= $cashflow['id'] ?>" onclick="return confirm('Yakin hapus transaksi ini?')">
+                                                    <div class="dropdown-item-icon">
+                                                        <i data-feather="trash-2"></i>
+                                                    </div>
+                                                    Hapus
+                                                </a>
+                                            </div>
+                                        </div>
+                                    </td>
+                                <?php endif; ?>
+                            </tr>
+                        <?php endforeach; ?>
+                    </tbody>
+                </table>
+            </div>
+        <?php endif; ?>
+    </div>
+</div>
+
+<!-- Add DataTables JavaScript -->
+<script src="https://cdn.jsdelivr.net/npm/simple-datatables@7.1.2/dist/umd/simple-datatables.min.js" crossorigin="anonymous"></script>
+<script src="/assets/js/datatables-simple.js"></script>
 
 <?php
 $content = ob_get_clean();
