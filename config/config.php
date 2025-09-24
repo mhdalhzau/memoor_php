@@ -1,11 +1,11 @@
 <?php
-// Database configuration - MySQL InfinityFree
-define('DB_HOST', 'sql212.infinityfree.com');
-define('DB_PORT', '3306');
-define('DB_NAME', 'epiz_32157541_marklokpos');
-define('DB_USER', 'epiz_32157541');
-define('DB_PASS', 'BcTj52WsZE1yIT');
-define('DB_TYPE', 'mysql');
+// Database configuration - SQLite
+define('DB_HOST', '');
+define('DB_PORT', '');
+define('DB_NAME', 'database.sqlite');
+define('DB_USER', '');
+define('DB_PASS', '');
+define('DB_TYPE', 'sqlite');
 
 // Application configuration
 define('APP_NAME', 'SPBU Management System');
